@@ -9,8 +9,8 @@ import io.jenkins.blueocean.rest.annotation.Capability;
 import io.jenkins.blueocean.rest.hal.Link;
 import io.jenkins.blueocean.rest.model.BluePipeline;
 import io.jenkins.blueocean.rest.model.Resource;
-import jenkins.branch.MultiBranchProject;
 import io.jenkins.blueocean.service.embedded.rest.BluePipelineFactory;
+import jenkins.branch.MultiBranchProject;
 import jenkins.scm.api.SCMHead;
 import jenkins.scm.api.metadata.ContributorMetadataAction;
 import jenkins.scm.api.metadata.ObjectMetadataAction;
@@ -19,8 +19,8 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.kohsuke.stapler.export.Exported;
 
 import static io.jenkins.blueocean.rest.model.KnownCapabilities.BLUE_BRANCH;
-import static io.jenkins.blueocean.rest.model.KnownCapabilities.PULL_REQUEST;
 import static io.jenkins.blueocean.rest.model.KnownCapabilities.JENKINS_WORKFLOW_JOB;
+import static io.jenkins.blueocean.rest.model.KnownCapabilities.PULL_REQUEST;
 
 /**
  * @author Vivek Pandey
@@ -29,7 +29,7 @@ import static io.jenkins.blueocean.rest.model.KnownCapabilities.JENKINS_WORKFLOW
 public class BranchImpl extends PipelineImpl {
 
     private static final String PULL_REQUEST = "pullRequest";
-    private static final String URL = "url";
+    private static final String BRANCH = "branch";
 
     private final Link parent;
     protected final Job job;
@@ -58,13 +58,13 @@ public class BranchImpl extends PipelineImpl {
         return null;
     }
 
-    @Exported(name = URL)
-    public String getUrl() {
+    @Exported(name = BRANCH)
+    public Branch getBranch() {
         ObjectMetadataAction om = job.getAction(ObjectMetadataAction.class);
         if (om == null) {
             return null;
         }
-        return  om.getObjectUrl() != null ? om.getObjectUrl() : null;
+        return new Branch(om.getObjectUrl() != null ? om.getObjectUrl() : null);
     }
 
     @Override
@@ -92,7 +92,22 @@ public class BranchImpl extends PipelineImpl {
         }
     }
 
-    public static class PullRequest extends Resource {
+    public static class Branch {
+        private static final String BRANCH_URL = "url";
+
+        private final String url;
+
+        public Branch(String url) {
+            this.url = url;
+        }
+
+        @Exported(name = BRANCH_URL)
+        public String getUrl() {
+            return url;
+        }
+    }
+
+    public static class PullRequest {
         private static final String PULL_REQUEST_NUMBER = "id";
         private static final String PULL_REQUEST_AUTHOR = "author";
         private static final String PULL_REQUEST_TITLE = "title";
@@ -134,11 +149,6 @@ public class BranchImpl extends PipelineImpl {
         @Exported(name = PULL_REQUEST_AUTHOR)
         public String getAuthor() {
             return author;
-        }
-
-        @Override
-        public Link getLink() {
-            return null;
         }
     }
 
