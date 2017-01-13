@@ -1,9 +1,10 @@
 package io.jenkins.blueocean.service.embedded.util;
 
 import com.cloudbees.hudson.plugins.folder.AbstractFolder;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import hudson.model.Item;
 import hudson.model.Job;
-import hudson.model.TopLevelItem;
 import hudson.model.User;
 import hudson.plugins.favorite.Favorites;
 import hudson.plugins.favorite.Favorites.FavoriteException;
@@ -18,10 +19,13 @@ import io.jenkins.blueocean.service.embedded.rest.BlueFavoriteResolver;
 import io.jenkins.blueocean.service.embedded.rest.BluePipelineFactory;
 import io.jenkins.blueocean.service.embedded.rest.FavoriteImpl;
 import jenkins.model.Jenkins;
+import jenkins.scm.api.metadata.PrimaryInstanceMetadataAction;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.Collection;
 
 /**
  * @author Ivan Meredith
@@ -108,16 +112,22 @@ public class FavoriteUtil {
      * @param folder to check within
      * @return default branch
      */
+    @SuppressWarnings("unchecked")
     public static Job resolveDefaultBranch(AbstractFolder folder) {
-        // TODO: lookup the multibranch project and look for a default branch property
-        TopLevelItem job = folder.getJob(DEFAULT_BRANCH);
+        Job job = Iterables.find((Collection<Job>)folder.getAllJobs(), new Predicate<Job>() {
+            @Override
+            public boolean apply(@Nullable Job input) {
+                return input != null && input.getAction(PrimaryInstanceMetadataAction.class) != null;
+            }
+        }, null);
+        // Kept for backward compatibility for Git SCMs that do not yet implement PrimaryInstanceMetadataAction
+        if (job == null) {
+            job = (Job) folder.getJob(DEFAULT_BRANCH);
+        }
         if(job == null) {
-            throw new ServiceException.BadRequestExpception("no master branch to favorite");
+            throw new ServiceException.BadRequestExpception("no default branch to favorite");
         }
-        if (!(job instanceof Job)) {
-            throw new ServiceException.MethodNotAllowedException(DEFAULT_BRANCH + " is not a job");
-        }
-        return (Job) job;
+        return job;
     }
 
     private static User getUser() {
