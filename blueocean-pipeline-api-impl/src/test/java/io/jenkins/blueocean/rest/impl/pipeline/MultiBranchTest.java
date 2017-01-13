@@ -101,7 +101,7 @@ public class MultiBranchTest extends PipelineBaseTest {
         assertEquals("https://path/to/branch", branch.getBranch().getUrl());
         assertFalse(branch.getBranch().isPrimary());
         when(job.getAction(PrimaryInstanceMetadataAction.class)).thenReturn(new PrimaryInstanceMetadataAction());
-        assertFalse(branch.getBranch().isPrimary());
+        assertTrue(branch.getBranch().isPrimary());
     }
 
     @Test
